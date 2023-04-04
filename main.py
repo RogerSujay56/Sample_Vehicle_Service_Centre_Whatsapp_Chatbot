@@ -27,7 +27,7 @@ app = Flask (__name__)
 
 aws_host = 'birdwabs.cc6s9j3sk8vb.ap-south-1.rds.amazonaws.com'
 usr = "admin"
-pas = "your_password"
+pas = "Birdwabs2019"
 db = "Sujay_BVC_Demo"
 
 def get_connection(query,val):
@@ -41,7 +41,7 @@ def get_connection(query,val):
 #Pre-define text
 email = 'Kindly enter your *Email Id* 📧'
 pincode= "Kindly enter your *Pin Code* "
-fprocess_complte = '''Thank you for sharing the Information, Well done! *Let's Start by selecting a Service.* 🛒'''
+fprocess_complte = '''Thank you for sharing the Information, Well done! *Let's Start by selecting a Option.* '''
 storenames = 'Please select near by store 🏤'
 deliverytype = 'Kindly select your order fulfillment preference 🛒 by *{}* store.'
 selected_ordertype = 'Thank you for sharing your store preference. Click on the Link to Place Your Order for {} 🏤'
@@ -133,7 +133,7 @@ def savesentlog(frm, response, statuscode,Body,msgtype):
     cursor = cnx.cursor ()
     cursor.execute (add_data, val)
     cnx.commit ()
-    cnx.close ()
+    cnx.close () 
 
 def send_pdf(to, link, caption=""):
     authkey = update_authkey ()
@@ -511,7 +511,7 @@ def Get_Message() :
                
                     if not already_exist(frm,today):  #New User
                         # print("entered into new user if block")
-                        interactive_message_with_2button(frm,"Hello 👋, Welcome to *Vehical Service Centre!* 🤗 \\n To get started,\\n kindly enter which service station you would like to choose?","Service_Station1","Service_Station2","Station_selection")
+                        interactive_message_with_2button(frm,"Hello 👋, Welcome to *Vehical Service Centre!* 🤗  \\nTo get started, \\nkindly enter which service station you would like to choose?","Service_Station1","Service_Station2","Station_selection")
                         
                         update_name = "insert into tbl_cust(mobile_number, camp_id,is_valid) values (%s,%s,%s)"
                         val = (frm, '1','1')
@@ -583,8 +583,8 @@ def Get_Message() :
                         
 
                         if stn_no == '1' and is_info =='0':
-                            print("insite stn no1")
-                            name = 'Hello 👋, Welcome to *Service Station '+ stn_no +'* 🤗 \\nTo get started, kindly enter your *Full Name* '
+                            print("inside stn no1")
+                            name = 'Hello 👋, Welcome to *Service Station '+ stn_no +'* 🤗  \\nTo get started, kindly enter your *Full Name* '
                             send_message(frm,name,'ask_name')  #name=  'Hello 👋, Welcome to *Vehical Service Centre!* 🤗 \\nTo get started
                             update_flag = "UPDATE tbl_whatsapp set is_info = (%s) where mobile_number = '" +frm+ "' "
                             val = ('1')
@@ -625,20 +625,42 @@ def Get_Message() :
                         elif is_info == '11':
                             if (resp1.isdigit() and len(resp1)==6):
                                 send_message(frm,fprocess_complte,'Profile Completed')
+                                interactive_message_with_2button(frm,"Select Option to book or cancel service ","Book_Service","Cancel_Service",'Main_Option')
                                 update_pincode= "UPDATE tbl_customer set pincode =(%s) where mobile_number = '" +frm+ "' "
                                 val1=(resp1)
                                 get_connection(update_pincode,val1)
-                                update_name = "UPDATE tbl_whatsapp set is_info = (%s), is_verified = (%s) , resp1 = (%s) where mobile_number = '" +frm+ "' "
-                                val = ('2','1','pass_pincode')
+                                update_name = "UPDATE tbl_whatsapp set is_info = (%s) where mobile_number = '" +frm+ "' "
+                                val = ('12')
                                 get_connection(update_name,val)
-                                is_info = '2'
-                                is_verified = '1'
-                                print(is_verified,"isverified in last pincode")
+                                # is_info = '2'
+                                # is_verified = '1'
+                                # print(is_verified,"isverified in last pincode")
                                 # resp1 = 'pass_pincode'
                             else:
                                 send_message(frm,'Please type in your *correct Pincode*','Pincode validation')
 
-                        
+                        elif is_info=='12' and resp1== 'Book_Service':
+
+                            print("inside is_info=='12' and resp1== 'Book_Service'")
+
+                            update_name = "UPDATE tbl_whatsapp set is_info = (%s), is_verified = (%s) , resp1 = (%s) where mobile_number = '" +frm+ "' "
+                            val = ('2','1','book_service')
+                            get_connection(update_name,val)
+                            is_info = '2'
+                            is_verified = '1'
+                            print(is_verified,"isverified in bookservice")
+
+                        elif is_info=='12' and resp1=='Cancel_Service': 
+
+                            print("inside is_info=='12' and resp1== 'cancel service'")
+
+                            update_name = "UPDATE tbl_whatsapp set is_info = (%s), is_verified = (%s) , resp1 = (%s) where mobile_number = '" +frm+ "' "
+                            val = ('3','2','cancel_service')
+                            get_connection(update_name,val)
+                            is_info = '3'
+                            is_verified = '2'
+                            print(is_verified,"isverified in cancel service")       
+
                         if stn_no == '2' and is_info =='0':
                             print("insite stn no2")
                             name = 'Hello 👋, Welcome to *Service Station '+ stn_no +'* 🤗 \\nTo get started, kindly enter your *Full Name* '
@@ -679,30 +701,63 @@ def Get_Message() :
                         elif is_info == 'B':
                             if (resp1.isdigit() and len(resp1)==6):
                                 send_message(frm,fprocess_complte,'Profile Completed')
+                                interactive_message_with_2button(frm,"Select Option to book or cancel service ","Book_Service","Cancel_Service",'Main_Option')
+                                
                                 update_pincode= "UPDATE tbl_customer set pincode =(%s) where mobile_number = '" +frm+ "' "
                                 val1=(resp1)
                                 get_connection(update_pincode,val1)
-                                update_name = "UPDATE tbl_whatsapp set is_info = (%s), is_verified = (%s) , resp1 = (%s) where mobile_number = '" +frm+ "' "
-                                val = ('22','1','pass_pincode')
+                                update_name = "UPDATE tbl_whatsapp set is_info = (%s) where mobile_number = '" +frm+ "' "
+                                val = ('22')
                                 get_connection(update_name,val)
                                 is_info = '22'
-                                is_verified = '1'
+                                # is_verified = '1'
                                 print(is_info)
 
                                 resp1 = 'pass_pincode'
                             else:
                                 send_message(frm,'Please type in your *correct Pincode*','Pincode validation')
                     
+
+                        elif is_info=='22' and resp1== 'Book_Service':
+
+                            print("inside is_info=='22' and resp1== 'Book_Service'")
+
+                            update_name = "UPDATE tbl_whatsapp set is_info = (%s), is_verified = (%s) , resp1 = (%s) where mobile_number = '" +frm+ "' "
+                            val = ('2','1','book_service')
+                            get_connection(update_name,val)
+                            is_info = '2'
+                            is_verified = '1'
+                            print(is_verified,"isverified in last pincode")
+
+                        elif is_info=='22' and resp1=='Cancel_Service': 
+
+                            print("inside is_info=='22' and resp1== 'cancel_service'")
+
+                            update_name = "UPDATE tbl_whatsapp set is_info = (%s), is_verified = (%s) , resp1 = (%s) where mobile_number = '" +frm+ "' "
+                            val = ('3','2','cancel_service')
+                            get_connection(update_name,val)
+                            is_info = '3'
+                            is_verified = '2'
+                            print(is_verified,"isverified in last pincode")      
+
                         
                     if is_verified == '1' and (is_info=='2' or is_info =='22'):
                         print("inside isverified = 1 and is info 2 or 22")
+
                         demo_bot.eng()
+                    
+                    elif is_verified =='2' and is_info=='3':
+                        print("inside is_verified =='2' and is_info=='3'")
+                        interactive_message_with_2button(frm,"Your Booking has been canceled!! \\n To book again select option","Book_Service","STOP",'cancellation')
+
+                        update_name = "UPDATE tbl_whatsapp set is_info = (%s),is_verified=(%s), stn_no = (%s) where mobile_number = '" +frm+ "' "
+                        val = ('22','0','2')
+                        get_connection(update_name,val)
+
 
             if msg_type == 'image' or msg_type == 'video' or msg_type == 'document':
                 if camp_id == '1':
-                    send_message(frm,'Please *enter the correct* response. ','resp1_is_other')
-
-                        
+                    send_message(frm,'Please *enter the correct* response. ','resp1_is_other')                        
                             
                 else:
                         send_message(frm,'Please *enter the correct* response. ','resp1_is_other')

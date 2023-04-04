@@ -28,7 +28,7 @@ app = Flask (__name__)
 
 aws_host = 'birdwabs.cc6s9j3sk8vb.ap-south-1.rds.amazonaws.com'
 usr = "admin"
-pas = "your_password"
+pas = "Birdwabs2019"
 db = "Sujay_BVC_Demo"
 
 
@@ -414,6 +414,34 @@ def send_interactive_menu(frm,head,body,title,item1,item2,item3,item4,item5,item
     savesentlog(frm, response, statuscode,message,'interactive')
     return response
 
+
+def send_slot_menu(frm, head, body, title, items, descs, message):
+    authkey = update_authkey()
+    url = "https://3.108.41.139:9090/v1/messages"
+    sections = [{"rows": []}]
+    for i in range(len(items)):
+        sections[0]["rows"].append({"id": str(i + 1), "title": items[i], "description": descs[i]})
+    payload = {
+        "to": frm,
+        "recipient_type": "individual",
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "header": {"type": "text", "text": head},
+            "body": {"text": body},
+            "action": {"button": title, "sections": sections},
+        },
+    }
+    headers = {"Content-Type": "application/json", "Authorization": "Bearer " + authkey}
+    response = requests.post(url, headers=headers, json=payload, verify=False)
+    statuscode = response.status_code
+    response = response.text
+    print(response)
+    savesentlog(frm, response, statuscode, message, "interactive")
+    return response
+
+
+
 def send_texturl(to, body, message):
     authkey = update_authkey ()
     url = "https://3.108.41.139:9090/v1/messages"
@@ -442,13 +470,45 @@ def send_texturl(to, body, message):
     return response
 
 
+# #to book and cancel slot
+# # Initialize a list of all available time slots
+# available_slots = ['Slot1','Slot2']
+# # Initialize a list to keep track of booked time slots
+# booked_slots = []
+
+# # Function to book a time slot
+# def book_slot(slot):
+#     if slot in available_slots:
+#         available_slots.remove(slot)
+#         booked_slots.append(slot)
+#         print(f"Successfully booked {slot}.")
+#     else:
+#         print(f"Sorry, {slot} is not available.")
+
+# # Function to cancel a booking slot
+# def cancel_slot(slot):
+#     if slot in booked_slots:
+#         booked_slots.remove(slot)
+#         available_slots.append(slot)
+#         available_slots.sort()
+#         print(f"Booking for {slot} has been canceled.")
+#     else:
+#         print(f"No booking found for {slot}.")
 
 
 
 
+available_slots = ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4'] 
+                    # Initialize a list to keep track of booked time slots
+booked_slots = []
 
-
-
+def book_slot(slot):
+    if slot in available_slots:
+        available_slots.remove(slot)
+        booked_slots.append(slot)
+        return f"Successfully booked {slot}."
+    else:
+        return  f"Selected, {slot} which is not available."
 
 
 #demobot class
@@ -514,8 +574,10 @@ class demobot:
         print(is_valid)
         # notify_user()
         if (msg_type == "text" or msg_type == 'button' or msg_type == 'interactive'):
-            print(resp1,'======')
-            print(is_temp)
+            print(resp1,'======resp1')
+            print(is_temp,"_____istemp")
+            print(is_info,"++++++info")
+            print(is_verified,"-----verified")
             if is_temp =='0':
                 menu = 'To Book a Service,Please select any one service from the below options.'
                 interactive_message_with_3button(frm,menu,'Car Wash','Engine Oil','Overall Service','Ask_Service')
@@ -615,8 +677,11 @@ class demobot:
                     add_date = "Insert into tbl_booking (booking_date) values (%s)"
                     val1 = (resp1)
                     get_connection(add_date, val1)
-                    
-                    interactive_message_with_2button(frm,"We have only two slots available select any one \\nSlot1: 09:00 AM to 12:00 PM \\nSlot2: 01:00 PM to 06:00 PM ","Slot1","Slot2","slot_selection")
+
+                 
+
+                    #Send interactive button msg of Main-Slots to user
+                    interactive_message_with_2button(frm,"We have only two slots available select any one \\nSlotA: 09:00 AM to 12:00 PM \\nSlotB: 01:00 PM to 06:00 PM ","Slot-A","Slot-B","slot_selection")
                     
                     print('below interactive2button'+resp1)
 
@@ -627,27 +692,89 @@ class demobot:
                 if main_menu == '2' and is_valid == '0':
 
                     print('inside mainmenu 2 and isvalid 0')
+                
+                  
+                    head="SLOT-MENU"
+                    body="Select the avaiable slots from menu"
+                    title='Slot-Name'
+                    items = available_slots
+                    descs = ['Desc-A1', 'Desc-A2', 'Desc-A3', 'Desc-A4', 'Desc-B1', 'Desc-B2', 'Desc-B3', 'Desc-B4']
+                    # descs = ["Slot: " + slot.split('-')[1] for slot in available_slots]
+                    # book_slot(resp1)
+                    send_slot_menu(frm,head,body,title,items,descs,"slotmenu") 
+                    send_message(frm,"Choose available slots from below: \\nAvailable Slots: "+" ".join([i for i in available_slots])+'\\nHere are the Booked Slots: '+" ".join([i for i in booked_slots]),'slot_selection')
+                    
+                    # send_message(frm,"You have selected the "+ book_slot(resp1) +"09:00 AM to 12:00 PM","slotnumber")
+                    # send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
 
-                    if resp1 == 'Slot1':
-                        resp1 = '1'
-                    elif resp1 == 'Slot2':
-                        resp1 = '2'
+                    if resp1 == 'Slot-A':
+                        resp1 = 'A'
+                    elif resp1 == 'Slot-B':
+                        resp1 = 'B'
+                    
+                    temp = resp1
 
-                    # send_message(frm,"You have selected the "+ resp1,"slotnumber")
-                    send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
-                                    
                     add_service = "Insert into tbl_slot (slot_number) values (%s)"
+                    # add_slotname = "UPDATE tbl_slot set slot_name = (%s) where slot_number = '"+resp1+"'"
+                    
                     val1 = (resp1)
                     get_connection(add_service, val1)
                     
+                    update_name = "UPDATE tbl_whatsapp set main_menu = (%s) where mobile_number = '" +frm+ "' "
+                    val = ('3')
+                    get_connection(update_name, val)              
+                                                
+                           
+                if main_menu == '3' and resp1 in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']:
+
+                    print("inside mainmenu 3 and resp1 in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']")
+                            
                     update_name = "UPDATE tbl_whatsapp set is_temp = (%s) where mobile_number = '" +frm+ "' "
                     val = ('33')
                     get_connection(update_name,val)
-                                   
-                                                
-                    # interactive_message_with_2button(frm,"Choose available slots for *Car Wash* from below","Slot1","Slot2","slot_selection")
-                           
+
+                    # book_slot(resp1)
+                    # send_message(frm,"Choose available slots from below: \\nAvailable Slots: "+" ".join([i for i in available_slots])+'\\n Here are the Booked Slots: '+" ".join([i for i in booked_slots]),'slot_selection')
+                    print(resp1)
+                    send_message(frm,"You have  "+ book_slot(resp1),"slotnumber")
+                    send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
+                    # print(resp1)
+                    
+                    add_slotname = "UPDATE tbl_slot set slot_name = (%s) where slot_number = '"+temp+"'"
+                    
+                    if resp1 == 'Slot-A1':
+                        resp1 = 'A1'
+                    elif resp1 == 'Slot-A2':
+                        resp1 = 'A2'
+                    elif resp1 == 'Slot-A3':
+                        resp1 = 'A3'
+                    elif resp1 == 'Slot-A4':
+                        resp1 = 'A4'
+                    elif resp1 == 'Slot-B1':
+                        resp1 = 'B5'
+                    elif resp1 == 'Slot-B2':
+                        resp1 = 'B6'
+                    elif resp1 == 'Slot-B3':
+                        resp1 = 'B7'
+                    elif resp1 == 'Slot-B4':
+                        resp1 = 'B8'
+                    
+                    val1 = (resp1)
+                    get_connection(add_slotname, val1)
+
+
+                    update_name = "UPDATE tbl_whatsapp set main_menu = (%s) where mobile_number = '" +frm+ "' "
+                    val = ('4')
+                    get_connection(update_name, val) 
+
+                    
                 
+
+                elif main_menu =='3' and resp1 not in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']:
+                    print("main menu 3 and inside resp1 not in slot list")
+                    send_message(frm,"Invalid Slot",'invalidslot')
+                                     
+
             elif is_temp =="22" and serv_no=='2':
                 print("inside temp 22 and servno2")
 
@@ -660,8 +787,11 @@ class demobot:
                     add_date = "Insert into tbl_booking (booking_date) values (%s)"
                     val1 = (resp1)
                     get_connection(add_date, val1)
+
+                 
+
                     
-                    interactive_message_with_2button(frm,"We have only two slots available select any one \\nSlot1: 09:00 AM to 12:00 PM \\nSlot2: 01:00 PM to 06:00 PM ","Slot1","Slot2","slot_selection")
+                    interactive_message_with_2button(frm,"We have only two slots available select any one \\nSlot-A: 09:00 AM to 12:00 PM \\nSlot-B: 01:00 PM to 06:00 PM ","Slot-A","Slot-B","slot_selection")
                     
                     print('below interactive2button'+resp1)
 
@@ -673,22 +803,86 @@ class demobot:
 
                     print('inside mainmenu 3 and isvalid 0')
 
-                    if resp1 == 'Slot1':
-                        resp1 = '1'
-                    elif resp1 == 'Slot2':
-                        resp1 = '2'
+                    head="SLOT-MENU"
+                    body="Select the avaiable slots from menu"
+                    title='Slot-Name'
+                    items = available_slots
+                    descs = ['Desc-A1', 'Desc-A2', 'Desc-A3', 'Desc-A4', 'Desc-B1', 'Desc-B2', 'Desc-B3', 'Desc-B4']
+                    
+                    send_slot_menu(frm,head,body,title,items,descs,"slotmenu")
+                   
+                    # book_slot(resp1)
+                    # send_message(frm,"Choose available slots from below: \\nAvailable Slots: "+" ".join([i for i in available_slots])+'\\nHere are the Booked Slots: '+" ".join([i for i in booked_slots]),'slot_selection')
+                    
+                    # send_message(frm,"You have selected the "+ book_slot(resp1) +"09:00 AM to 12:00 PM","slotnumber")
+                    # send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
 
-                    # send_message(frm,"You have selected the "+ resp1,"slotnumber")
-                    send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
-                                    
+                    if resp1 == 'Slot-A':
+                        resp1 = 'A'
+                    elif resp1 == 'Slot-B':
+                        resp1 = 'B'
+
                     add_service = "Insert into tbl_slot (slot_number) values (%s)"
+                    add_slotname = "UPDATE tbl_slot set slot_name = (%s) where slot_number = '"+resp1+"'"
+                    
                     val1 = (resp1)
                     get_connection(add_service, val1)
                     
+                    # update_name = "UPDATE tbl_whatsapp set is_temp = (%s) where mobile_number = '" +frm+ "' "
+                    # val = ('33')
+                    # get_connection(update_name,val)
+                    update_name = "UPDATE tbl_whatsapp set main_menu = (%s) where mobile_number = '" +frm+ "' "
+                    val = ('4')
+                    get_connection(update_name, val)              
+                           
+                
+
+                if main_menu == '4' and resp1 in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']:
+
+                    print("inside mainmenu 4 and resp1 in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']")
+                            
                     update_name = "UPDATE tbl_whatsapp set is_temp = (%s) where mobile_number = '" +frm+ "' "
                     val = ('33')
                     get_connection(update_name,val)
 
+                    # book_slot(resp1)
+                    # send_message(frm,"Choose available slots from below: \\nAvailable Slots: "+" ".join([i for i in available_slots])+'\\n Here are the Booked Slots: '+" ".join([i for i in booked_slots]),'slot_selection')
+                    print(resp1)
+                    send_message(frm,"You have  "+ book_slot(resp1),"slotnumber")
+                    send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
+                    # print(resp1)
+
+                    
+                    if resp1 == 'Slot-A1':
+                        resp1 = 'A1'
+                    elif resp1 == 'Slot-A2':
+                        resp1 = 'A2'
+                    elif resp1 == 'Slot-A3':
+                        resp1 = 'A3'
+                    elif resp1 == 'Slot-A4':
+                        resp1 = 'A4'
+                    elif resp1 == 'Slot-B1':
+                        resp1 = 'B5'
+                    elif resp1 == 'Slot-B2':
+                        resp1 = 'B6'
+                    elif resp1 == 'Slot-B3':
+                        resp1 = 'B7'
+                    elif resp1 == 'Slot-B4':
+                        resp1 = 'B8'
+                    
+                    val1 = (resp1)
+                    get_connection(add_slotname, val1)
+
+
+                    update_name = "UPDATE tbl_whatsapp set main_menu = (%s) where mobile_number = '" +frm+ "' "
+                    val = ('5')
+                    get_connection(update_name, val) 
+
+                    
+
+                elif main_menu =='4' and resp1 not in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']:
+                    print("main menu 4 and inside resp1 not in slot list")
+                    send_message(frm,"Invalid Slot",'invalidslot')            
 
             elif is_temp =="22" and serv_no=='3':
                 print("inside temp 22 and servno3")
@@ -702,8 +896,11 @@ class demobot:
                     add_date = "Insert into tbl_booking (booking_date) values (%s)"
                     val1 = (resp1)
                     get_connection(add_date, val1)
+
+                 
+
                     
-                    interactive_message_with_2button(frm,"We have only two slots available select any one \\nSlot1: 09:00 AM to 12:00 PM \\nSlot2: 01:00 PM to 06:00 PM ","Slot1","Slot2","slot_selection")
+                    interactive_message_with_2button(frm,"We have only two slots available select any one \\nSlot1: 09:00 AM to 12:00 PM \\nSlot2: 01:00 PM to 06:00 PM ","Slot-A","Slot-B","slot_selection")
                     
                     print('below interactive2button'+resp1)
 
@@ -715,21 +912,112 @@ class demobot:
 
                     print('inside mainmenu 4 and isvalid 0')
 
-                    if resp1 == 'Slot1':
-                        resp1 = '1'
-                    elif resp1 == 'Slot2':
-                        resp1 = '2'
+                    
+                    
 
-                    # send_message(frm,"You have selected the "+ resp1,"slotnumber")
-                    send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
-                                    
+                    # available_slots = ['Slot1','Slot2','Slot3','Slot4','Slot5','Slot6','Slot7','Slot8'] 
+                    # Initialize a list to keep track of booked time slots
+                    # booked_slots = []
+
+                    # def book_slot(slot):
+                    #     if slot in available_slots:
+                    #         available_slots.remove(slot)
+                    #         booked_slots.append(slot)
+                    #         return f"Successfully booked {slot}."
+                    #     else:
+                    #         return  f"Sorry, {slot} is not available."
+                
+                
+                    head="SLOT-MENU"
+                    body="Select the avaiable slots from menu"
+                    title='Slot-Name'
+                    items = available_slots
+                    descs = ['Desc-A1', 'Desc-A2', 'Desc-A3', 'Desc-A4', 'Desc-B1', 'Desc-B2', 'Desc-B3', 'Desc-B4']
+                    
+                    send_slot_menu(frm,head,body,title,items,descs,"slotmenu")
+
+
+                    # book_slot(resp1)
+                    # send_message(frm,"Choose available slots from below: \\nAvailable Slots: "+" ".join([i for i in available_slots])+'\\nHere are the Booked Slots: '+" ".join([i for i in booked_slots]),'slot_selection')
+                    
+                    # send_message(frm,"You have selected the "+ book_slot(resp1) +"09:00 AM to 12:00 PM","slotnumber")
+                    # send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
+
+                    if resp1 == 'Slot-A':
+                        resp1 = 'A'
+                    elif resp1 == 'Slot-B':
+                        resp1 = 'B'
+
                     add_service = "Insert into tbl_slot (slot_number) values (%s)"
+                    add_slotname = "UPDATE tbl_slot set slot_name = (%s) where slot_number = '"+resp1+"'"
+                    
                     val1 = (resp1)
                     get_connection(add_service, val1)
                     
+                    # update_name = "UPDATE tbl_whatsapp set is_temp = (%s) where mobile_number = '" +frm+ "' "
+                    # val = ('33')
+                    # get_connection(update_name,val)
+                    update_name = "UPDATE tbl_whatsapp set main_menu = (%s) where mobile_number = '" +frm+ "' "
+                    val = ('5')
+                    get_connection(update_name, val)              
+                                                
+                    # interactive_message_with_2button(frm,"Choose available slots for *Car Wash* from below","Slot1","Slot2","slot_selection")
+                           
+                
+
+                if main_menu == '5' and resp1 in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']:
+
+                    print("inside mainmenu 5 and resp1 in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']")
+                            
                     update_name = "UPDATE tbl_whatsapp set is_temp = (%s) where mobile_number = '" +frm+ "' "
                     val = ('33')
-                    get_connection(update_name,val)        
+                    get_connection(update_name,val)
+
+                    # book_slot(resp1)
+                    # send_message(frm,"Choose available slots from below: \\nAvailable Slots: "+" ".join([i for i in available_slots])+'\\n Here are the Booked Slots: '+" ".join([i for i in booked_slots]),'slot_selection')
+                    print(resp1)
+                    send_message(frm,"You have  "+ book_slot(resp1),"slotnumber")
+                    send_message(frm,"Confirm Your Booking? Type Y/n?",'confirmation')
+                    print(resp1)
+
+                    # add_slotname = "UPDATE tbl_slot set slot_name = (%s) where slot_number = '"+resp1+"'"
+                    
+                    
+                    if resp1 == 'Slot-A1':
+                        resp1 = 'A1'
+                    elif resp1 == 'Slot-A2':
+                        resp1 = 'A2'
+                    elif resp1 == 'Slot-A3':
+                        resp1 = 'A3'
+                    elif resp1 == 'Slot-A4':
+                        resp1 = 'A4'
+                    elif resp1 == 'Slot-B1':
+                        resp1 = 'B5'
+                    elif resp1 == 'Slot-B2':
+                        resp1 = 'B6'
+                    elif resp1 == 'Slot-B3':
+                        resp1 = 'B7'
+                    elif resp1 == 'Slot-B4':
+                        resp1 = 'B8'
+                    
+                    val1 = (resp1)
+                    get_connection(add_slotname, val1)
+
+
+                    update_name = "UPDATE tbl_whatsapp set main_menu = (%s) where mobile_number = '" +frm+ "' "
+                    val = ('6')
+                    get_connection(update_name, val) 
+
+                    
+                    
+                    
+                                   
+                                                
+                    # interactive_message_with_2button(frm,"Choose available slots for *Car Wash* from below","Slot1","Slot2","slot_selection")
+                
+                elif main_menu =='5' and resp1 not in ['Slot-A1','Slot-A2','Slot-A3','Slot-A4','Slot-B1','Slot-B2','Slot-B3','Slot-B4']:
+                    print("main menu 5 and inside resp1 not in slot list")
+                    send_message(frm,"Invalid Slot",'invalidslot')
 
             elif is_temp =='33' and resp1.lower() =='y':
 
@@ -761,14 +1049,16 @@ class demobot:
                 service='adsfdg'
                 Date='12/12/2332'
                 Slot_no='123'
+                Slot_Name='A2'
 
                 # f'Finally the Booking Message with Date & Time for Confirmation.\n\n'
                 # f'Name: {name}\nLocation: {location}\nCategory: {category}\n'
                 # f'Date: {dates}\nTime: {time_opt}\n\n Enter Stop or Quit to exit'
-                send_message(frm,f"Booking Confirmed \\n Your Booking Details: "
+                send_message(frm,f"Booking Confirmed \\nYour Booking Details: "
                              f'Name: {name} \\nService_Station:{service_station}\\nService:{service}'
-                             f'\\nDate of Booking:{Date}\\nSlot_Number:{Slot_no}','Confirmation')
+                             f'\\nDate of Booking:{Date}\\nSlot_Number:{Slot_no}\\nSlot_Name:{Slot_Name}','Confirmation')
             
+
             else:
                 send_message(frm,"Enter Valid Response",'invalidconfirmation')
                 
